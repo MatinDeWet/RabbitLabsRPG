@@ -34,19 +34,23 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
       
-    - name: Test with coverage
-      run: >
-        dotnet test --no-build --verbosity normal 
-        --logger "trx;LogFileName=test-results-{assembly}.trx" 
-        --collect:"XPlat Code Coverage" 
-        --results-directory ./TestResults
+    - name: Run tests for each project
+      run: |
+        for testProj in $(find . -name "*.Tests.csproj" -o -name "*Test.csproj"); do
+          projName=$(basename $testProj .csproj)
+          echo "Running tests for $projName"
+          dotnet test $testProj --no-build --verbosity normal \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/$projName
+        done
       
     - name: Generate test report
       uses: dorny/test-reporter@v1
       if: success() || failure()
       with:
         name: xUnit Tests
-        path: '**/TestResults/*.trx'
+        path: '**/TestResults/*/test-results.trx'
         reporter: dotnet-trx
         fail-on-error: false
         
