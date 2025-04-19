@@ -1,5 +1,4 @@
 name: Rabbit Labs RPG CI Pipeline
-
 on:
   push:
     branches: [ master, develop ]
@@ -23,7 +22,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -36,21 +35,18 @@ jobs:
       run: dotnet build --no-restore
       
     - name: Test with coverage
-      run: |
-        for project in $(find ./ -name '*.csproj' -path './tests/*'); do
-          projectName=$(basename $project .csproj)
-          dotnet test $project --no-build --verbosity normal \
-            --logger "trx;LogFileName=$projectName-test-results.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults/$projectName
-        done
+      run: >
+        dotnet test --no-build --verbosity normal 
+        --logger "trx;LogFileName=test-results-{assembly}.trx" 
+        --collect:"XPlat Code Coverage" 
+        --results-directory ./TestResults
       
     - name: Generate test report
       uses: dorny/test-reporter@v1
       if: success() || failure()
       with:
         name: xUnit Tests
-        path: '**/TestResults/**/*.trx'
+        path: '**/TestResults/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
         
